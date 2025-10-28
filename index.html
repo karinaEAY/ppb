@@ -69,7 +69,8 @@
             height: 8px;
             border-radius: 50%;
             pointer-events: none;
-            transition: transform 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 1.2s cubic-bezier(0.5, 0, 1, 1);
+            /* ЗМІНЕНО: Анімація довша (2.2с) */
+            transition: transform 2.2s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 2.2s cubic-bezier(0.5, 0, 1, 1);
         }
 
         /* --- ДОДАНО: Стиль для частинок салюту на весь екран --- */
@@ -81,7 +82,8 @@
             border-radius: 50%;
             pointer-events: none;
             opacity: 0; /* Спочатку приховані */
-            animation: full-firework-explode 1.5s forwards; /* Нова анімація */
+            /* ЗМІНЕНО: Анімація довша (2.5с) */
+            animation: full-firework-explode 2.5s forwards; /* Нова анімація */
         }
 
         @keyframes full-firework-explode {
@@ -98,22 +100,23 @@
 </head>
 <body class="flex items-center justify-center p-4">
 
-    <!-- 
-      Контейнер, що імітує екран телефону.
-      Змінено на темний фон + неонова підсвітка (тінь та рамка)
-    --><div id="app" class="relative w-full max-w-md bg-slate-800 bg-opacity-80 backdrop-blur-sm rounded-3xl shadow-2xl shadow-cyan-500/20 overflow-hidden border border-cyan-500/30" style="min-height: 80vh;">
+    <div id="app" class="relative w-full max-w-md bg-slate-800 bg-opacity-80 backdrop-blur-sm rounded-3xl shadow-2xl shadow-cyan-500/20 overflow-hidden border border-cyan-500/30" style="min-height: 80vh;">
 
-        <!-- ============================================= --><!--     СТОРІНКА 1: СПИСОК ТОВАРІВ (ГОЛОВНА)      --><!-- ============================================= --><div id="products-page" class="p-5 pb-24">
+        <!-- Сторінка товарів -->
+        <div id="products-page" class="p-5 pb-24">
             <header class="mb-6 flex justify-between items-center">
                 <h1 class="text-3xl font-bold text-gray-100 neon-text-blue">Choose your iPhone</h1>
                 
-                <!-- Контейнер кошика, переміщений сюди --><div id="cart-icon-container">
+                <!-- Іконка кошика -->
+                <div id="cart-icon-container">
                     <button id="cart-icon" 
                             class="bg-cyan-600 text-white w-14 h-14 relative rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:shadow-cyan-500/50">
-                        <!-- Іконка кошика --><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <!-- Іконка SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <!-- Бейдж з кількістю товарів --><span id="cart-badge" 
+                        <!-- Лічильник товарів -->
+                        <span id="cart-badge" 
                               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-slate-800 transition-all scale-0">
                             0
                         </span>
@@ -121,13 +124,17 @@
                 </div>
             </header>
 
-            <!-- Сітка для продуктів --><div id="products-grid" class="grid grid-cols-2 gap-4">
-                <!-- Картки продуктів будуть додані сюди через JavaScript --></div>
+            <!-- Сітка товарів -->
+            <div id="products-grid" class="grid grid-cols-2 gap-4">
+                <!-- Картки товарів будуть тут (згенеровано JS) -->
+            </div>
         </div>
 
-        <!-- ============================================= --><!--        СТОРІНКА 2: КОШИК (ПРИХОВАНА)         --><!-- ============================================= --><div id="cart-page" class="p-5 pb-24 hidden">
+        <!-- Сторінка кошика -->
+        <div id="cart-page" class="p-5 pb-24 hidden">
             <header class="mb-6 flex items-center">
-                <!-- Кнопка "Назад" --><button id="back-to-products" class="p-2 mr-3 rounded-full text-gray-300 hover:bg-slate-700 transition-colors">
+                <!-- Кнопка "Назад" -->
+                <button id="back-to-products" class="p-2 mr-3 rounded-full text-gray-300 hover:bg-slate-700 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -135,10 +142,13 @@
                 <h1 class="text-3xl font-bold text-gray-100 neon-text-blue">Your Order</h1>
             </header>
 
-            <!-- Список товарів у кошику --><div id="cart-items-list" class="space-y-3 mb-6 min-h-[200px]">
-                <!-- Товари кошика будуть додані сюди --></div>
+            <!-- Список товарів в кошику -->
+            <div id="cart-items-list" class="space-y-3 mb-6 min-h-[200px]">
+                <!-- Елементи кошика будуть тут (згенеровано JS) -->
+            </div>
 
-            <!-- Форма замовлення --><form id="checkout-form" class="space-y-4">
+            <!-- Форма замовлення -->
+            <form id="checkout-form" class="space-y-4">
                 <div>
                     <label for="customer-name" class="block text-sm font-medium text-gray-300 mb-1">Your Name</label>
                     <input type="text" id="customer-name" name="customer-name" required
@@ -154,7 +164,8 @@
             </form>
         </div>
 
-        <!-- ============================================= --><!--  СТОРІНКА 3: ПІДТВЕРДЖЕННЯ (ПРИХОВАНА)  --><!-- ============================================= --><div id="confirmation-page" class="p-5 pb-24 hidden flex-col items-center justify-center text-center" style="min-height: 70vh;">
+        <!-- Сторінка підтвердження -->
+        <div id="confirmation-page" class="p-5 pb-24 hidden flex-col items-center justify-center text-center" style="min-height: 70vh;">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-emerald-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.7));">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -245,9 +256,10 @@
                         }, 10);
                     });
 
+                    /* ЗМІНЕНО: Час видалення довший (2210ms) */
                     setTimeout(() => {
                         particle.remove();
-                    }, 1210); 
+                    }, 2210); 
                 }
             }
 
@@ -285,10 +297,10 @@
 
                     document.body.appendChild(particle);
 
-                    // Видаляємо частинку після анімації
+                    /* ЗМІНЕНО: Час видалення довший (2500ms) */
                     setTimeout(() => {
                         particle.remove();
-                    }, 1500); // 1500ms = тривалість анімації full-firework-explode
+                    }, 2500); // 2500ms = тривалість анімації full-firework-explode
                 }
             }
 
@@ -541,5 +553,7 @@
     </script>
 </body>
 </html>
+
+
 
 
