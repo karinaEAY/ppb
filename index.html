@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone Store</title>
+    <!-- Підключення Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Підключення шрифту Inter --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Встановлюємо шрифт Inter за замовчуванням */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Темний неоновий фон */
+            background-color: #0f172a; /* Tailwind slate-900 */
+            min-height: 100vh;
+            scroll-behavior: smooth;
+        }
+        
+        /* Стиль для анімації "польоту" до кошика */
+        .fly-to-cart {
+            position: fixed;
+            z-index: 100;
+            transition: all 1s cubic-bezier(0.6, 0, 0.8, 1);
+            border-radius: 0.5rem;
+            opacity: 1;
+        }
+
+        /* Анімація пульсації для кошика */
+        .cart-pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px rgba(6, 182, 212, 0.7); }
+            50% { transform: scale(1.15); box-shadow: 0 0 25px rgba(6, 182, 212, 1); }
+            100% { transform: scale(1); box-shadow: 0 0 15px rgba(6, 182, 212, 0.7); }
+        }
+
+        /* Приховування елементів */
+        .hidden {
+            display: none;
+        }
+
+        /* Неоновий текст */
+        .neon-text-blue {
+            text-shadow: 0 0 3px #fff, 0 0 8px #06b6d4, 0 0 12px #06b6d4;
+        }
+
+        /* Анімація "переливання" для картки */
+        @keyframes neon-shimmer {
+            0%   { border-color: #06b6d4; box-shadow: 0 0 10px #06b6d4, inset 0 0 5px #06b6d4; }
+            33%  { border-color: #8b5cf6; box-shadow: 0 0 10px #8b5cf6, inset 0 0 5px #8b5cf6; }
+            66%  { border-color: #ec4899; box-shadow: 0 0 10px #ec4899, inset 0 0 5px #ec4899; }
+            100% { border-color: #06b6d4; box-shadow: 0 0 10px #06b6d4, inset 0 0 5px #06b6d4; }
+        }
+
+        .product-added-glow {
+            animation: neon-shimmer 1.5s linear;
+            border-width: 1px;
+        }
+
+        /* --- ДОДАНО: Стиль для частинок салюту від кнопки --- */
+        .firework-particle-btn {
+            position: fixed;
+            z-index: 200;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 1.2s cubic-bezier(0.5, 0, 1, 1);
+        }
+
+        /* --- ДОДАНО: Стиль для частинок салюту на весь екран --- */
+        .firework-particle-full {
+            position: fixed;
+            z-index: 150; /* Трохи нижче, ніж частинки від кнопки */
+            width: 6px; /* Менші частинки */
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0; /* Спочатку приховані */
+            animation: full-firework-explode 1.5s forwards; /* Нова анімація */
+        }
+
+        @keyframes full-firework-explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(0.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <!-- 
+      Контейнер, що імітує екран телефону.
+      Змінено на темний фон + неонова підсвітка (тінь та рамка)
+    --><div id="app" class="relative w-full max-w-md bg-slate-800 bg-opacity-80 backdrop-blur-sm rounded-3xl shadow-2xl shadow-cyan-500/20 overflow-hidden border border-cyan-500/30" style="min-height: 80vh;">
+
+        <!-- ============================================= --><!--     СТОРІНКА 1: СПИСОК ТОВАРІВ (ГОЛОВНА)      --><!-- ============================================= --><div id="products-page" class="p-5 pb-24">
+            <header class="mb-6 flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-100 neon-text-blue">Choose your iPhone</h1>
+                
+                <!-- Контейнер кошика, переміщений сюди --><div id="cart-icon-container">
+                    <button id="cart-icon" 
+                            class="bg-cyan-600 text-white w-14 h-14 relative rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:shadow-cyan-500/50">
+                        <!-- Іконка кошика --><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <!-- Бейдж з кількістю товарів --><span id="cart-badge" 
+                              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-slate-800 transition-all scale-0">
+                            0
+                        </span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Сітка для продуктів --><div id="products-grid" class="grid grid-cols-2 gap-4">
+                <!-- Картки продуктів будуть додані сюди через JavaScript --></div>
+        </div>
+
+        <!-- ============================================= --><!--        СТОРІНКА 2: КОШИК (ПРИХОВАНА)         --><!-- ============================================= --><div id="cart-page" class="p-5 pb-24 hidden">
+            <header class="mb-6 flex items-center">
+                <!-- Кнопка "Назад" --><button id="back-to-products" class="p-2 mr-3 rounded-full text-gray-300 hover:bg-slate-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 class="text-3xl font-bold text-gray-100 neon-text-blue">Your Order</h1>
+            </header>
+
+            <!-- Список товарів у кошику --><div id="cart-items-list" class="space-y-3 mb-6 min-h-[200px]">
+                <!-- Товари кошика будуть додані сюди --></div>
+
+            <!-- Форма замовлення --><form id="checkout-form" class="space-y-4">
+                <div>
+                    <label for="customer-name" class="block text-sm font-medium text-gray-300 mb-1">Your Name</label>
+                    <input type="text" id="customer-name" name="customer-name" required
+                           class="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all placeholder-gray-400"
+                           placeholder="John Doe">
+                    <p id="name-error" class="text-red-500 text-sm mt-1 hidden">Please enter your name</p>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-semibold shadow-md shadow-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/40 hover:bg-emerald-500 transition-all duration-300 transform hover:scale-105">
+                    Confirm Order
+                </button>
+            </form>
+        </div>
+
+        <!-- ============================================= --><!--  СТОРІНКА 3: ПІДТВЕРДЖЕННЯ (ПРИХОВАНА)  --><!-- ============================================= --><div id="confirmation-page" class="p-5 pb-24 hidden flex-col items-center justify-center text-center" style="min-height: 70vh;">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-emerald-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.7));">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 id="confirm-message" class="text-2xl font-bold text-gray-100 mb-2"></h1>
+            <p class="text-gray-400 mb-6">Your order is on its way!</p>
+            
+            <button id="back-to-store" class="text-cyan-400 font-medium hover:text-cyan-300 hover:underline">
+                Back to Home
+            </button>
+        </div>
+
+    </div> <!-- Кінець #app --><script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- БАЗА ДАНИХ ТОВАРІВ (ОНОВЛЕНО СОРТУВАННЯ ТА ЗОБРАЖЕННЯ) ---
+            const products = [
+                { id: '8', name: 'iPhone 17 Pro Max', img: 'https://my-apple.com.ua/image/catalog/products/iphone/iphone-17-pro-max/iphone-17-pro-max-cosmic-orange-1.png' },
+                { id: '7', name: 'iPhone 16 Pro Max', img: 'https://applefun.com.ua/upload/2024-09/0-apple-iphone-16-pro-max-256gb-natural-titanium1725968625.webp' },
+                { id: '1', name: 'iPhone 15 Pro', img: 'https://grokholsky.com/uploads/products/590-590/66bde94cd62d6-2024-08-15-02-41-00.webp' },
+                { id: '2', name: 'iPhone 15', img: 'https://yabloki.ua/media/cache/sylius_shop_product_original/50/b6/iphone-15-purple-128-mb-1.png.webp' },
+                { id: '3', name: 'iPhone 14 Pro', img: 'https://myapplestyle.com.ua/wa-data/public/shop/products/59/64/6459/images/9413/9413.970.png' },
+                { id: '4', name: 'iPhone 14', img: 'https://pngimg.com/d/iphone_14_PNG41.png' },
+                { id: '5', name: 'iPhone 13', img: 'https://my-apple.com.ua/image/catalog/products/iphone/iphone-13-13-mini/pink-1.png' },
+                { id: '6', name: 'iPhone SE', img: 'https://platforma-ukraine.com.ua/image/cache/catalog/products/fbb14591-9481-11ec-9295-005056877aa1/apple_iphone_se_2020gb_black-mxd02-_1-620x715.png' }
+            ];
+
+            // --- СТАН ЗАСТОСУНКУ ---
+            let cart = [];
+
+            // --- DOM ЕЛЕМЕНТИ ---
+            const productsPage = document.getElementById('products-page');
+            const cartPage = document.getElementById('cart-page');
+            const confirmationPage = document.getElementById('confirmation-page');
+
+            const productsGrid = document.getElementById('products-grid');
+            const cartItemsList = document.getElementById('cart-items-list');
+            
+            const cartIcon = document.getElementById('cart-icon');
+            const cartBadge = document.getElementById('cart-badge');
+
+            const backToProductsBtn = document.getElementById('back-to-products');
+            const backToStoreBtn = document.getElementById('back-to-store');
+            
+            const checkoutForm = document.getElementById('checkout-form');
+            const customerNameInput = document.getElementById('customer-name');
+            const nameError = document.getElementById('name-error');
+            
+            const confirmMessage = document.getElementById('confirm-message');
+
+            // --- ФУНКЦІЇ ---
+
+            /**
+             * Функція для запуску неонового салюту від кнопки
+             */
+            function launchNeonFireworksFromButton(button) {
+                const rect = button.getBoundingClientRect();
+                const startX = rect.left + rect.width / 2;
+                const startY = rect.top + rect.height / 2;
+                const colors = ['#06b6d4', '#ec4899', '#34d399', '#f59e0b']; // Cyan, Pink, Green, Amber
+                const particleCount = 40;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('firework-particle-btn'); // Використовуємо новий клас
+
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.backgroundColor = color;
+                    particle.style.boxShadow = `0 0 8px ${color}, 0 0 12px ${color}`;
+
+                    particle.style.left = `${startX}px`;
+                    particle.style.top = `${startY}px`;
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 150 + 50; 
+                    
+                    const endX = Math.cos(angle) * distance;
+                    const endY = (Math.sin(angle) * distance) - (Math.random() * 75); 
+
+                    document.body.appendChild(particle);
+
+                    particle.style.transform = 'translate(0, 0) scale(1)';
+                    particle.style.opacity = '1';
+
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            particle.style.transform = `translate(${endX}px, ${endY}px) scale(0)`;
+                            particle.style.opacity = '0';
+                        }, 10);
+                    });
+
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 1210); 
+                }
+            }
+
+            /**
+             * --- ДОДАНО: Функція для запуску неонового салюту на весь екран ---
+             */
+            function launchFullPageNeonFireworks() {
+                const colors = ['#06b6d4', '#ec4899', '#34d399', '#f59e0b']; // Cyan, Pink, Green, Amber
+                const particleCount = 100; // Більше частинок для ефекту на весь екран
+
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('firework-particle-full');
+
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.backgroundColor = color;
+                    particle.style.boxShadow = `0 0 8px ${color}, 0 0 12px ${color}`;
+
+                    // Випадкова початкова позиція в межах видимого вікна
+                    const startX = Math.random() * window.innerWidth;
+                    const startY = Math.random() * window.innerHeight;
+                    particle.style.left = `${startX}px`;
+                    particle.style.top = `${startY}px`;
+
+                    // Випадковий напрямок та відстань "вибуху"
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 300 + 100; // 100 до 400px
+                    
+                    const endX = Math.cos(angle) * distance;
+                    const endY = Math.sin(angle) * distance;
+
+                    // Встановлюємо CSS-змінні для анімації
+                    particle.style.setProperty('--x', `${endX}px`);
+                    particle.style.setProperty('--y', `${endY}px`);
+
+                    document.body.appendChild(particle);
+
+                    // Видаляємо частинку після анімації
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 1500); // 1500ms = тривалість анімації full-firework-explode
+                }
+            }
+
+
+            /**
+             * Рендерить картки товарів на головній сторінці
+             */
+            function renderProducts() {
+                productsGrid.innerHTML = ''; 
+                products.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col items-center border border-slate-700 hover:border-cyan-500/50 transition-all duration-300';
+                    card.innerHTML = `
+                        <img src="${product.img}" alt="${product.name}" 
+                             class="w-full h-32 object-contain mb-3 rounded-md product-image"
+                             onerror="this.src='https://placehold.co/200x200/f0f0f0/999?text=Image+Error'">
+                        <h3 class="font-semibold text-gray-200 text-center text-sm mb-3">${product.name}</h3>
+                        <button class="add-to-cart-btn mt-auto w-full bg-cyan-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-cyan-500 shadow-md shadow-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/40 transition-all duration-300"
+                                data-id="${product.id}"
+                                data-name="${product.name}"
+                                data-img="${product.img}">
+                            Add
+                        </button>
+                    `;
+                    productsGrid.appendChild(card);
+                });
+
+                document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                    button.addEventListener('click', handleAddToCartClick);
+                });
+            }
+            
+            /**
+             * Обробник кліку на кнопку "Додати"
+             */
+            function handleAddToCartClick(event) {
+                const button = event.currentTarget;
+                const id = button.dataset.id;
+                
+                const existingItem = cart.find(item => item.id === id);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id: id,
+                        name: button.dataset.name,
+                        img: button.dataset.img,
+                        quantity: 1
+                    });
+                }
+                
+                updateCartBadge();
+                animateToCart(button);
+
+                const card = button.closest('.product-card');
+                card.classList.add('product-added-glow');
+                setTimeout(() => {
+                    card.classList.remove('product-added-glow');
+                }, 1500); 
+            }
+
+            /**
+             * Анімація "польоту" товару до кошика
+             */
+            function animateToCart(button) {
+                const card = button.closest('.product-card');
+                const img = card.querySelector('.product-image');
+                const imgRect = img.getBoundingClientRect();
+                const cartRect = cartIcon.getBoundingClientRect();
+
+                const clone = img.cloneNode(true);
+                clone.classList.add('fly-to-cart');
+                clone.style.left = `${imgRect.left}px`;
+                clone.style.top = `${imgRect.top}px`;
+                clone.style.width = `${imgRect.width}px`;
+                clone.style.height = `${imgRect.height}px`;
+                
+                document.body.appendChild(clone);
+
+                requestAnimationFrame(() => {
+                    clone.style.left = `${cartRect.left + cartRect.width / 2 - 10}px`;
+                    clone.style.top = `${cartRect.top + cartRect.height / 2 - 10}px`;
+                    clone.style.width = '20px';
+                    clone.style.height = '20px';
+                    clone.style.opacity = '0.5';
+                    clone.style.transform = 'scale(0.3)';
+                });
+
+                setTimeout(() => {
+                    clone.remove();
+                    cartIcon.classList.add('cart-pulse');
+                }, 700); 
+
+                setTimeout(() => {
+                    cartIcon.classList.remove('cart-pulse');
+                }, 1200); 
+            }
+
+            /**
+             * Оновлює лічильник на іконці кошика
+             */
+            function updateCartBadge() {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartBadge.textContent = totalItems;
+                
+                if (totalItems > 0) {
+                    cartBadge.classList.remove('scale-0');
+                    cartBadge.classList.add('scale-100');
+                } else {
+                    cartBadge.classList.remove('scale-100');
+                    cartBadge.classList.add('scale-0');
+                }
+            }
+
+            /**
+             * Рендерить список товарів у кошику
+             */
+            function renderCartItems() {
+                cartItemsList.innerHTML = ''; 
+                if (cart.length === 0) {
+                    cartItemsList.innerHTML = `<p class="text-gray-400 text-center">Your cart is empty.</p>`;
+                    return;
+                }
+
+                cart.forEach((item, index) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'flex items-center justify-between bg-slate-700 p-3 rounded-lg shadow-sm';
+                    itemEl.innerHTML = `
+                        <div class="flex items-center">
+                            <img src="${item.img}" alt="${item.name}" class="w-12 h-12 object-contain rounded-md mr-3"
+                                 onerror="this.src='https://placehold.co/100x100/f0f0f0/999?text=Error'">
+                            <div>
+                                <h4 class="font-medium text-gray-100 text-sm">${item.name}</h4>
+                                <p class="text-xs text-gray-400">Quantity: ${item.quantity}</p>
+                            </div>
+                        </div>
+                        <button class="remove-from-cart-btn text-pink-500 hover:text-pink-400 p-1" data-id="${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    `;
+                    cartItemsList.appendChild(itemEl);
+                });
+
+                document.querySelectorAll('.remove-from-cart-btn').forEach(button => {
+                    button.addEventListener('click', handleRemoveFromCart);
+                });
+            }
+
+            /**
+             * Обробник кліку на кнопку "Видалити" з кошика
+             */
+            function handleRemoveFromCart(event) {
+                const id = event.currentTarget.dataset.id;
+                
+                const itemIndex = cart.findIndex(item => item.id === id);
+                if (itemIndex > -1) {
+                    const item = cart[itemIndex];
+                    item.quantity -= 1;
+                    
+                    if (item.quantity === 0) {
+                        cart.splice(itemIndex, 1);
+                    }
+                }
+                
+                renderCartItems(); 
+                updateCartBadge(); 
+            }
+
+            // --- ФУНКЦІЇ НАВІГАЦІЇ ---
+
+            function showProductsPage() {
+                productsPage.classList.remove('hidden');
+                cartPage.classList.add('hidden');
+                confirmationPage.classList.add('hidden');
+            }
+
+            function showCartPage() {
+                productsPage.classList.add('hidden');
+                cartPage.classList.remove('hidden');
+                confirmationPage.classList.add('hidden');
+                renderCartItems(); 
+            }
+
+            function showConfirmationPage(name) {
+                productsPage.classList.add('hidden');
+                cartPage.classList.add('hidden');
+                confirmationPage.classList.remove('hidden');
+                confirmationPage.classList.add('flex'); 
+                
+                confirmMessage.textContent = `Thank you, ${name}!`;
+            }
+
+            // --- ОБРОБНИКИ ПОДІЙ ---
+
+            cartIcon.addEventListener('click', showCartPage);
+            backToProductsBtn.addEventListener('click', showProductsPage);
+
+            backToStoreBtn.addEventListener('click', () => {
+                cart = [];
+                updateCartBadge();
+                customerNameInput.value = '';
+                nameError.classList.add('hidden');
+                showProductsPage();
+            });
+
+            checkoutForm.addEventListener('submit', (event) => {
+                event.preventDefault(); 
+                const name = customerNameInput.value.trim();
+
+                if (cart.length === 0) {
+                    alert("Your cart is empty!"); 
+                    return;
+                }
+
+                if (name === '') {
+                    nameError.classList.remove('hidden');
+                    customerNameInput.classList.add('border-red-500');
+                    customerNameInput.focus();
+                } else {
+                    nameError.classList.add('hidden');
+                    customerNameInput.classList.remove('border-red-500');
+                    
+                    const submitButton = checkoutForm.querySelector('button[type="submit"]');
+                    launchNeonFireworksFromButton(submitButton); // Салют від кнопки
+                    launchFullPageNeonFireworks(); // Салют на весь екран
+
+                    console.log('Нове замовлення:');
+                    console.log('Клієнт:', name);
+                    console.log('Товари:', JSON.stringify(cart, null, 2));
+
+                    setTimeout(() => {
+                        showConfirmationPage(name);
+                    }, 500); 
+                }
+            });
+
+            customerNameInput.addEventListener('input', () => {
+                if (customerNameInput.value.trim() !== '') {
+                    nameError.classList.add('hidden');
+                    customerNameInput.classList.remove('border-red-500');
+                }
+            });
+
+            // --- ІНІЦІАЛІЗАЦІЯ ---
+            renderProducts(); 
+        });
+    </script>
+</body>
+</html>
+
+
